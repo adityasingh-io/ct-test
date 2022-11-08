@@ -140,11 +140,40 @@
       <ul class="grid grid--uniform{% if collection.products_count > 0 %} grid--view-items{% endif %}">
         {% for product in collection.products %}
           <li class="grid__item grid__item--{{section.id}} {{ grid_item_width }}">
-            {% for variant in product.variants %}
-                {% if variant.available %}
-                    {% include 'product-card-grid-with-variant', max_height: max_height, product: product, show_vendor: section.settings.show_vendor %}
+            {% for product in collection.products %}
+                {% if product.variants.size > 1 %}
+                    {% for option in product.options %}
+                        {% if option == 'Color' %}
+                        {%- comment -%} Checking Position of Color Option in Variant {%- endcomment -%}
+                        {% assign index = forloop.index0 %}
+                        {% assign colorlist = '' %}
+                            {% for variant in product.variants %}
+                                {%- comment -%} assign current variant color  {%- endcomment -%}
+                                {% assign color = variant.options[index] %}
+                                {% unless colorlist contains color %}
+                                <li class="grid__item grid__item--{{section.id}} {{ grid_item_width }}">
+                                    {% include 'product-card-grid-with-variant', max_height: max_height, product: product, variant: variant, show_vendor: section.settings.show_vendor %}
+                                </li>
+                                {%- comment -%} Once a color been looped through, it gets added 
+                                    to the list so if another variant with same color arrives,
+                                    it can be skipped in unless condition above 
+                                {%- endcomment -%}
+                                    {% capture excludeList %}
+                                    {{colorlist | append: color | append: " " }}
+                                    {% endcapture %}
+                                    {% assign colorlist = excludeList %}
+                                {% endunless %}
+                            {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <li class="grid__item grid__item--{{section.id}} {{ grid_item_width }}">
+                        {% include 'product-card-grid', max_height: max_height, product: product, show_vendor: section.settings.show_vendor %}
+                    </li>
                 {% endif %}
             {% endfor %}
+            {%- comment -%} Looked through https://dylanjh.com/blogs/15-show-all-colors-of-a-product-as-separate-products-on-the-collection-page for logical help on the solution {%- endcomment -%}
+            
           </li>
         {% else %}
           {% comment %}
